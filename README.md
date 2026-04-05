@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-slim
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     permissions:
+      contents: read
       actions: write
     steps:
       - uses: k1LoW/rerun-action@v0

@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-slim
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     permissions:
+      contents: read
       actions: write
     steps:
       - uses: k1LoW/rerun-action@v0
@@ -24,9 +25,10 @@ jobs:
 
   # Example 2: Rerun with multiple patterns (matches any)
   # retry-on-multiple-patterns:
-  #   runs-on: ubuntu-latest
+  #   runs-on: ubuntu-slim
   #   if: ${{ github.event.workflow_run.conclusion == 'failure' }}
   #   permissions:
+  #     contents: read
   #     actions: write
   #   steps:
   #     - uses: k1LoW/rerun-action@v0
@@ -42,9 +44,10 @@ jobs:
 
   # Example 3: Rerun unconditionally on any failure
   # retry-unconditional:
-  #   runs-on: ubuntu-latest
+  #   runs-on: ubuntu-slim
   #   if: ${{ github.event.workflow_run.conclusion == 'failure' }}
   #   permissions:
+  #     contents: read
   #     actions: write
   #   steps:
   #     - uses: k1LoW/rerun-action@v0
