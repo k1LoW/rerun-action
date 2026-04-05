@@ -1,0 +1,76 @@
+name: 'Rerun'
+description: 'Reruns failed jobs, optionally only when specific patterns are found in logs'
+inputs:
+  run_id:
+    description: 'The workflow run ID to rerun'
+    required: true
+  pattern:
+    description: 'Pattern to search for in logs (newline-separated for multiple). If omitted, rerun unconditionally'
+    required: false
+  job:
+    description: 'Job name to check. Narrows log search scope when used with pattern. When used alone, reruns only if this job failed'
+    required: false
+  github_token:
+    description: 'GitHub Token with actions:write permission'
+    required: true
+  max_attempts:
+    description: 'Maximum run attempts to allow retry'
+    default: '3'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Rerun
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        INPUT_RUN_ID: ${{ inputs.run_id }}
+        INPUT_PATTERN: ${{ inputs.pattern }}
+        INPUT_JOB: ${{ inputs.job }}
+        INPUT_MAX_ATTEMPTS: ${{ inputs.max_attempts }}
+        REPO: ${{ github.repository }}
+      run: |
+        # 1. Check current attempt count of the target run
+        attempt=$(gh run view "${INPUT_RUN_ID}" --json attempt --jq '.attempt' -R "${REPO}")
+        echo "Run attempt: ${attempt}/${INPUT_MAX_ATTEMPTS}"
+        if [[ "${attempt}" -ge "${INPUT_MAX_ATTEMPTS}" ]]; then
+          echo "Max retry attempts reached. Skipping..."
+          exit 0
+        fi
+
+        # 2. If job is specified, resolve job ID and check if it failed
+        if [[ -n "${INPUT_JOB}" ]]; then
+          job_json=$(gh run view "${INPUT_RUN_ID}" --json jobs --jq ".jobs[] | select(.name == \"${INPUT_JOB}\")" -R "${REPO}")
+          if [[ -z "${job_json}" ]]; then
+            echo "::error::Job '${INPUT_JOB}' not found in run ${INPUT_RUN_ID}"
+            exit 1
+          fi
+          job_id=$(echo "${job_json}" | jq -r '.databaseId')
+          job_conclusion=$(echo "${job_json}" | jq -r '.conclusion')
+          if [[ "${job_conclusion}" != "failure" ]]; then
+            echo "Job '${INPUT_JOB}' did not fail (conclusion: ${job_conclusion}). Skipping..."
+            exit 0
+          fi
+        fi
+
+        # 3. If no pattern specified, rerun unconditionally
+        if [[ -z "${INPUT_PATTERN}" ]]; then
+          echo "No pattern specified. Rerunning failed jobs..."
+          gh run rerun "${INPUT_RUN_ID}" --failed -R "${REPO}"
+          exit 0
+        fi
+
+        # 4. Fetch logs
+        if [[ -n "${job_id}" ]]; then
+          gh run view --log --job "${job_id}" -R "${REPO}" > job_log.txt
+        else
+          gh run view "${INPUT_RUN_ID}" --log -R "${REPO}" > job_log.txt
+        fi
+
+        # 5. Check for pattern match
+        if grep -qF "${INPUT_PATTERN}" job_log.txt; then
+          echo "Pattern '${INPUT_PATTERN}' found. Rerunning failed jobs..."
+          gh run rerun "${INPUT_RUN_ID}" --failed -R "${REPO}"
+        else
+          echo "Pattern '${INPUT_PATTERN}' not found. No retry triggered."
+        fi

@@ -1,0 +1,24 @@
+name: Test Retry
+
+on:
+  workflow_run:
+    workflows: ["Test Target"]
+    types:
+      - completed
+
+jobs:
+  retry-with-pattern-and-job:
+    runs-on: ubuntu-slim
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Rerun with pattern + job
+        uses: ./
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          pattern: 'Network partition'
+          job: 'flaky-job'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          max_attempts: '3'

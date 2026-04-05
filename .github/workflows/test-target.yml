@@ -1,0 +1,27 @@
+name: Test Target
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Test: pattern + job
+  flaky-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate transient failure
+        run: |
+          if [[ "${{ github.run_attempt }}" -le 1 ]]; then
+            echo "Error: Network partition occurred"
+            exit 1
+          fi
+          echo "Succeeded on attempt ${{ github.run_attempt }}"
+
+  # Test: job only (no pattern)
+  always-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - name: This job always passes
+        run: echo "OK"

@@ -1,0 +1,54 @@
+name: Retry on transient failure
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+jobs:
+  # Example 1: Rerun when a specific pattern is found in a specific job's log
+  retry-on-pattern:
+    runs-on: ubuntu-slim
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    permissions:
+      actions: write
+    steps:
+      - uses: k1LoW/rerun-action@v0
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          pattern: 'Network partition'
+          job: 'build-and-test'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          max_attempts: '2'
+
+  # Example 2: Rerun with multiple patterns (matches any)
+  # retry-on-multiple-patterns:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+  #   permissions:
+  #     actions: write
+  #   steps:
+  #     - uses: k1LoW/rerun-action@v0
+  #       with:
+  #         run_id: ${{ github.event.workflow_run.id }}
+  #         pattern: |
+  #           Network partition
+  #           Connection reset
+  #           Timeout exceeded
+  #         job: 'build-and-test'
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         max_attempts: '3'
+
+  # Example 3: Rerun unconditionally on any failure
+  # retry-unconditional:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+  #   permissions:
+  #     actions: write
+  #   steps:
+  #     - uses: k1LoW/rerun-action@v0
+  #       with:
+  #         run_id: ${{ github.event.workflow_run.id }}
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         max_attempts: '3'
