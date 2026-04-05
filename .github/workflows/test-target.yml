@@ -25,3 +25,16 @@ jobs:
     steps:
       - name: This job always passes
         run: echo "OK"
+
+  # Verify that flaky-job was rerun and succeeded
+  verify:
+    needs: flaky-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm rerun succeeded
+        run: |
+          echo "flaky-job succeeded on attempt ${{ github.run_attempt }}"
+          if [[ "${{ github.run_attempt }}" -le 1 ]]; then
+            echo "::error::Expected run_attempt > 1, but got ${{ github.run_attempt }}"
+            exit 1
+          fi
