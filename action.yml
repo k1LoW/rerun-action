@@ -12,10 +12,10 @@ inputs:
     required: false
   github_token:
     description: 'GitHub Token with actions:write permission'
-    required: true
+    default: ${{ github.token }}
   max_attempts:
     description: 'Maximum run attempts to allow retry'
-    default: '3'
+    default: 3
 
 runs:
   using: "composite"

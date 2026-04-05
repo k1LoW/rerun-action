@@ -20,8 +20,7 @@ jobs:
           run_id: ${{ github.event.workflow_run.id }}
           pattern: 'Network partition'
           job: 'build-and-test'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          max_attempts: '2'
+          max_attempts: 2
 
   # Example 2: Rerun with multiple patterns (matches any)
   # retry-on-multiple-patterns:
@@ -39,8 +38,7 @@ jobs:
   #           Connection reset
   #           Timeout exceeded
   #         job: 'build-and-test'
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         max_attempts: '3'
+  #         max_attempts: 3
 
   # Example 3: Rerun unconditionally on any failure
   # retry-unconditional:
@@ -53,5 +51,4 @@ jobs:
   #     - uses: k1LoW/rerun-action@v0
   #       with:
   #         run_id: ${{ github.event.workflow_run.id }}
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         max_attempts: '3'
+  #         max_attempts: 3
