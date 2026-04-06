@@ -31,6 +31,8 @@ jobs:
         with:
           job: flaky-job
           pattern: Network partition
+          retry_count: 20
+          retry_interval: 15
 
       - name: Assert check result
         if: ${{ always() }}
