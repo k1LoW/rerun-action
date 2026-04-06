@@ -1,5 +1,7 @@
 # Changelog
 
+## [v1.2.1](https://github.com/k1LoW/rerun-action/compare/v1.2.0...v1.2.1) - 2026-04-06
+
 ## [v1.2.0](https://github.com/k1LoW/rerun-action/compare/v1.1.0...v1.2.0) - 2026-04-06
 - fix: add reran output to action by @k1LoW in https://github.com/k1LoW/rerun-action/pull/8
 
