@@ -107,6 +107,24 @@ When multiple jobs are specified, a rerun is triggered if **any** of them failed
       - run: echo "reran=${{ steps.rerun.outputs.reran }}"
 ```
 
+### Notify only when a rerun was triggered
+
+This example uses a pseudo notification action to show how to branch on `steps.rerun.outputs.reran`.
+
+```yaml
+      - id: rerun
+        uses: k1LoW/rerun-action@182a20f04ea316e2d26b11a66839c275ad301562 # v1.1.0
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          pattern: 'Network partition'
+          job: 'build-and-test'
+
+      - uses: example/notify-action@v1
+        if: ${{ steps.rerun.outputs.reran == 'true' }}
+        with:
+          message: "Rerun triggered for workflow run ${{ github.event.workflow_run.id }}"
+```
+
 ## Inputs
 
 | Name | Required | Default | Description |
