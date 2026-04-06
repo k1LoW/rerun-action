@@ -15,7 +15,7 @@ jobs:
       contents: read
       actions: write
     steps:
-      - uses: k1LoW/rerun-action@v0
+      - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
         with:
           run_id: ${{ github.event.workflow_run.id }}
           pattern: 'Network partition'
@@ -30,7 +30,7 @@ jobs:
   #     contents: read
   #     actions: write
   #   steps:
-  #     - uses: k1LoW/rerun-action@v0
+  #     - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
   #       with:
   #         run_id: ${{ github.event.workflow_run.id }}
   #         pattern: |
@@ -48,7 +48,7 @@ jobs:
   #     contents: read
   #     actions: write
   #   steps:
-  #     - uses: k1LoW/rerun-action@v0
+  #     - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
   #       with:
   #         run_id: ${{ github.event.workflow_run.id }}
   #         max_attempts: 3

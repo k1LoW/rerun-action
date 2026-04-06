@@ -25,7 +25,7 @@ jobs:
       contents: read
       actions: write
     steps:
-      - uses: k1LoW/rerun-action@v0
+      - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
         with:
           run_id: ${{ github.event.workflow_run.id }}
           pattern: 'Network partition'
@@ -36,7 +36,7 @@ jobs:
 ### Rerun with multiple patterns (matches any)
 
 ```yaml
-      - uses: k1LoW/rerun-action@v0
+      - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
         with:
           run_id: ${{ github.event.workflow_run.id }}
           pattern: |
@@ -50,7 +50,7 @@ jobs:
 ### Rerun when a pattern is found across all jobs
 
 ```yaml
-      - uses: k1LoW/rerun-action@v0
+      - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
         with:
           run_id: ${{ github.event.workflow_run.id }}
           pattern: 'Network partition'
@@ -59,7 +59,7 @@ jobs:
 ### Rerun only if a specific job failed (no log check)
 
 ```yaml
-      - uses: k1LoW/rerun-action@v0
+      - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
         with:
           run_id: ${{ github.event.workflow_run.id }}
           job: 'build-and-test'
@@ -68,7 +68,7 @@ jobs:
 ### Rerun unconditionally on any failure
 
 ```yaml
-      - uses: k1LoW/rerun-action@v0
+      - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
         with:
           run_id: ${{ github.event.workflow_run.id }}
           max_attempts: 3
