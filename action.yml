@@ -1,4 +1,4 @@
-name: 'Rerun'
+name: 'Rerun Failed Jobs'
 description: 'Reruns failed jobs, optionally only when specific patterns are found in logs'
 branding:
   icon: 'refresh-ccw'
