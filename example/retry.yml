@@ -40,7 +40,23 @@ jobs:
   #         job: 'build-and-test'
   #         max_attempts: 3
 
-  # Example 3: Rerun unconditionally on any failure
+  # Example 3: Rerun with multiple jobs
+  # retry-on-multiple-jobs:
+  #   runs-on: ubuntu-slim
+  #   if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+  #   permissions:
+  #     contents: read
+  #     actions: write
+  #   steps:
+  #     - uses: k1LoW/rerun-action@4bb68c6192bf65d175fbad2ebe27b8504b3a65c1 # v1.0.0
+  #       with:
+  #         run_id: ${{ github.event.workflow_run.id }}
+  #         pattern: 'Network partition'
+  #         job: |
+  #           build-and-test
+  #           integration-test
+
+  # Example 4: Rerun unconditionally on any failure
   # retry-unconditional:
   #   runs-on: ubuntu-slim
   #   if: ${{ github.event.workflow_run.conclusion == 'failure' }}

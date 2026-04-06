@@ -11,7 +11,7 @@ inputs:
     description: 'Pattern to search for in logs (newline-separated for multiple). If omitted, rerun unconditionally'
     required: false
   job:
-    description: 'Job name to check. Narrows log search scope when used with pattern. When used alone, reruns only if this job failed'
+    description: 'Job name(s) to check (newline-separated for multiple). Narrows log search scope when used with pattern. When used alone, reruns only if any specified job failed'
     required: false
   github_token:
     description: 'GitHub Token with actions:write permission'
@@ -41,17 +41,29 @@ runs:
           exit 0
         fi
 
-        # 2. If job is specified, resolve job ID and check if it failed
+        # 2. If job is specified, check if any specified job failed and collect their IDs
+        failed_job_ids=()
         if [[ -n "${INPUT_JOB}" ]]; then
-          job_json=$(gh run view "${INPUT_RUN_ID}" --json jobs --jq ".jobs[] | select(.name == \"${INPUT_JOB}\")" -R "${REPO}")
-          if [[ -z "${job_json}" ]]; then
-            echo "::error::Job '${INPUT_JOB}' not found in run ${INPUT_RUN_ID}"
-            exit 1
-          fi
-          job_id=$(echo "${job_json}" | jq -r '.databaseId')
-          job_conclusion=$(echo "${job_json}" | jq -r '.conclusion')
-          if [[ "${job_conclusion}" != "failure" ]]; then
-            echo "Job '${INPUT_JOB}' did not fail (conclusion: ${job_conclusion}). Skipping..."
+          all_jobs_json=$(gh run view "${INPUT_RUN_ID}" --json jobs -R "${REPO}")
+          while IFS= read -r job_name; do
+            [[ -z "${job_name}" ]] && continue
+            job_json=$(echo "${all_jobs_json}" | jq -r --arg name "${job_name}" '.jobs[] | select(.name == $name)')
+            if [[ -z "${job_json}" ]]; then
+              echo "::error::Job '${job_name}' not found in run ${INPUT_RUN_ID}"
+              exit 1
+            fi
+            job_conclusion=$(echo "${job_json}" | jq -r '.conclusion')
+            if [[ "${job_conclusion}" == "failure" ]]; then
+              job_id=$(echo "${job_json}" | jq -r '.databaseId')
+              failed_job_ids+=("${job_id}")
+              echo "Job '${job_name}' failed (id: ${job_id})"
+            else
+              echo "Job '${job_name}' did not fail (conclusion: ${job_conclusion})"
+            fi
+          done <<< "${INPUT_JOB}"
+
+          if [[ ${#failed_job_ids[@]} -eq 0 ]]; then
+            echo "No specified jobs failed. Skipping..."
             exit 0
           fi
         fi
@@ -64,8 +76,11 @@ runs:
         fi
 
         # 4. Fetch logs
-        if [[ -n "${job_id}" ]]; then
-          gh run view --log --job "${job_id}" -R "${REPO}" > job_log.txt
+        : > job_log.txt
+        if [[ ${#failed_job_ids[@]} -gt 0 ]]; then
+          for jid in "${failed_job_ids[@]}"; do
+            gh run view --log --job "${jid}" -R "${REPO}" >> job_log.txt
+          done
         else
           gh run view "${INPUT_RUN_ID}" --log -R "${REPO}" > job_log.txt
         fi
