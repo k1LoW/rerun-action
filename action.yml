@@ -19,11 +19,16 @@ inputs:
   max_attempts:
     description: 'Maximum run attempts to allow retry'
     default: 3
+outputs:
+  reran:
+    description: 'Whether the failed jobs were rerun (true/false)'
+    value: ${{ steps.rerun.outputs.reran }}
 
 runs:
   using: "composite"
   steps:
     - name: Rerun
+      id: rerun
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}
@@ -33,6 +38,8 @@ runs:
         INPUT_MAX_ATTEMPTS: ${{ inputs.max_attempts }}
         REPO: ${{ github.repository }}
       run: |
+        echo "reran=false" >> "${GITHUB_OUTPUT}"
+
         # 1. Check current attempt count of the target run
         attempt=$(gh run view "${INPUT_RUN_ID}" --json attempt --jq '.attempt' -R "${REPO}")
         echo "Run attempt: ${attempt}/${INPUT_MAX_ATTEMPTS}"
@@ -72,6 +79,7 @@ runs:
         if [[ -z "${INPUT_PATTERN}" ]]; then
           echo "No pattern specified. Rerunning failed jobs..."
           gh run rerun "${INPUT_RUN_ID}" --failed -R "${REPO}"
+          echo "reran=true" >> "${GITHUB_OUTPUT}"
           exit 0
         fi
 
@@ -89,6 +97,7 @@ runs:
         if grep -qF "${INPUT_PATTERN}" job_log.txt; then
           echo "Pattern '${INPUT_PATTERN}' found. Rerunning failed jobs..."
           gh run rerun "${INPUT_RUN_ID}" --failed -R "${REPO}"
+          echo "reran=true" >> "${GITHUB_OUTPUT}"
         else
           echo "Pattern '${INPUT_PATTERN}' not found. No retry triggered."
         fi
