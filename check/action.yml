@@ -18,7 +18,7 @@ inputs:
     default: 5
   retry_interval:
     description: 'Seconds to wait between log fetch retries'
-    default: 3
+    default: 5
 outputs:
   matched:
     description: 'Whether the pattern was found in the job log (true/false)'

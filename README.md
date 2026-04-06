@@ -179,7 +179,7 @@ jobs:
 | `pattern` | Yes | | Pattern to search for in the job log |
 | `github_token` | No | `${{ github.token }}` | GitHub Token with `actions:read` permission |
 | `retry_count` | No | `5` | Number of retries while waiting for log output to become available |
-| `retry_interval` | No | `3` | Seconds to wait between log fetch retries |
+| `retry_interval` | No | `5` | Seconds to wait between log fetch retries |
 
 ### Outputs
 
