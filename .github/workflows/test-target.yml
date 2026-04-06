@@ -9,8 +9,13 @@ on:
 jobs:
   # Test: pattern + job
   flaky-job:
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+
       - name: Simulate transient failure
         run: |
           if [[ "${{ github.run_attempt }}" -le 1 ]]; then
@@ -18,6 +23,34 @@ jobs:
             exit 1
           fi
           echo "Succeeded on attempt ${{ github.run_attempt }}"
+
+      - name: Check current job log
+        id: check
+        if: ${{ always() }}
+        uses: ./check
+        with:
+          job: flaky-job
+          pattern: Network partition
+          retry_count: 20
+          retry_interval: 15
+
+      - name: Assert check result
+        if: ${{ always() }}
+        run: |
+          echo "matched=${{ steps.check.outputs.matched }}"
+          echo "reason=${{ steps.check.outputs.reason }}"
+
+          if [[ "${{ github.run_attempt }}" -le 1 ]]; then
+            if [[ "${{ steps.check.outputs.matched }}" != "true" ]]; then
+              echo "::error::Expected matched=true on first attempt"
+              exit 1
+            fi
+          else
+            if [[ "${{ steps.check.outputs.matched }}" != "false" ]]; then
+              echo "::error::Expected matched=false after rerun"
+              exit 1
+            fi
+          fi
 
   # Test: job only (no pattern)
   always-pass:

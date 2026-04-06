@@ -2,6 +2,8 @@
 
 A GitHub Action that reruns failed jobs, optionally only when specific patterns are found in logs.
 
+This repository also provides `k1LoW/rerun-action/check`, a companion action that inspects a running job log and returns whether it matches a pattern.
+
 ## How it works
 
 This action uses `gh run rerun <run_id> --failed` to rerun **all failed jobs** in a workflow run. The `job` and `pattern` inputs control **whether** to trigger a rerun, not **which** jobs get rerun.
@@ -140,3 +142,49 @@ This example uses a pseudo notification action to show how to branch on `steps.r
 | Name | Description |
 |------|-------------|
 | `reran` | `true` if this action triggered `gh run rerun`, otherwise `false` |
+
+## `check` action
+
+`k1LoW/rerun-action/check` is intended for use inside the target job itself. It does not rerun anything. Instead, it reads the current run's job log, retries a few times while the log is being flushed, and returns whether the specified pattern was found.
+
+### Usage
+
+```yaml
+jobs:
+  build-and-test:
+    name: build-and-test
+    runs-on: ubuntu-slim
+    steps:
+      - name: Run tests
+        run: make test
+
+      - id: check
+        if: ${{ always() }}
+        uses: k1LoW/rerun-action/check@main
+        with:
+          job: build-and-test
+          pattern: Network partition
+
+      - uses: example/notify-action@v1
+        if: ${{ steps.check.outputs.matched == 'true' }}
+        with:
+          message: "This job matched the retry-worthy pattern"
+```
+
+### Inputs
+
+| Name | Required | Default | Description |
+|------|----------|---------|-------------|
+| `job` | Yes | | Job name to inspect |
+| `pattern` | Yes | | Pattern to search for in the job log |
+| `github_token` | No | `${{ github.token }}` | GitHub Token with `actions:read` permission |
+| `retry_count` | No | `5` | Number of retries while waiting for log output to become available |
+| `retry_interval` | No | `5` | Seconds to wait between log fetch retries |
+
+### Outputs
+
+| Name | Description |
+|------|-------------|
+| `matched` | `true` if the pattern was found in the job log, otherwise `false` |
+| `job_id` | Database ID of the inspected job |
+| `reason` | Result summary such as `matched`, `pattern_not_found`, or `log_unavailable` |
