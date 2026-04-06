@@ -1,5 +1,8 @@
 name: 'Rerun'
 description: 'Reruns failed jobs, optionally only when specific patterns are found in logs'
+branding:
+  icon: 'refresh-ccw'
+  color: 'orange'
 inputs:
   run_id:
     description: 'The workflow run ID to rerun'
