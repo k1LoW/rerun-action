@@ -96,6 +96,35 @@ When multiple jobs are specified, a rerun is triggered if **any** of them failed
           max_attempts: 3
 ```
 
+### Check whether a rerun was triggered
+
+```yaml
+      - id: rerun
+        uses: k1LoW/rerun-action@182a20f04ea316e2d26b11a66839c275ad301562 # v1.1.0
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+
+      - run: echo "reran=${{ steps.rerun.outputs.reran }}"
+```
+
+### Notify only when a rerun was triggered
+
+This example uses a pseudo notification action to show how to branch on `steps.rerun.outputs.reran`.
+
+```yaml
+      - id: rerun
+        uses: k1LoW/rerun-action@182a20f04ea316e2d26b11a66839c275ad301562 # v1.1.0
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          pattern: 'Network partition'
+          job: 'build-and-test'
+
+      - uses: example/notify-action@v1
+        if: ${{ steps.rerun.outputs.reran == 'true' }}
+        with:
+          message: "Rerun triggered for workflow run ${{ github.event.workflow_run.id }}"
+```
+
 ## Inputs
 
 | Name | Required | Default | Description |
@@ -105,3 +134,9 @@ When multiple jobs are specified, a rerun is triggered if **any** of them failed
 | `job` | No | | Job name(s) to check (newline-separated for multiple). Narrows log search scope when used with `pattern`. When used alone, reruns only if any specified job failed |
 | `github_token` | No | `${{ github.token }}` | GitHub Token with `actions:write` permission |
 | `max_attempts` | No | `3` | Maximum run attempts to allow retry |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| `reran` | `true` if this action triggered `gh run rerun`, otherwise `false` |
