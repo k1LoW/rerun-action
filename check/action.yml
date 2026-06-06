@@ -1,0 +1,86 @@
+name: 'Check Job Logs'
+description: 'Checks whether a running job log matches a pattern without triggering a rerun'
+branding:
+  icon: 'search'
+  color: 'orange'
+inputs:
+  job:
+    description: 'Job name to inspect'
+    required: true
+  pattern:
+    description: 'Pattern to search for in the job log'
+    required: true
+  github_token:
+    description: 'GitHub Token with actions:read permission'
+    default: ${{ github.token }}
+  retry_count:
+    description: 'Number of retries while waiting for log output to become available'
+    default: 5
+  retry_interval:
+    description: 'Seconds to wait between log fetch retries'
+    default: 5
+outputs:
+  matched:
+    description: 'Whether the pattern was found in the job log (true/false)'
+    value: ${{ steps.check.outputs.matched }}
+  job_id:
+    description: 'Database ID of the inspected job'
+    value: ${{ steps.check.outputs.job_id }}
+  reason:
+    description: 'Result summary such as matched, pattern_not_found, or log_unavailable'
+    value: ${{ steps.check.outputs.reason }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check
+      id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        INPUT_JOB: ${{ inputs.job }}
+        INPUT_PATTERN: ${{ inputs.pattern }}
+        INPUT_RETRY_COUNT: ${{ inputs.retry_count }}
+        INPUT_RETRY_INTERVAL: ${{ inputs.retry_interval }}
+        REPO: ${{ github.repository }}
+        RUN_ID: ${{ github.run_id }}
+      run: |
+        echo "matched=false" >> "${GITHUB_OUTPUT}"
+        echo "job_id=" >> "${GITHUB_OUTPUT}"
+        echo "reason=job_not_found" >> "${GITHUB_OUTPUT}"
+
+        jobs_json=$(gh run view "${RUN_ID}" --json jobs -R "${REPO}")
+        job_json=$(echo "${jobs_json}" | jq -c --arg name "${INPUT_JOB}" '.jobs[] | select(.name == $name)' | head -n 1)
+        if [[ -z "${job_json}" ]]; then
+          echo "::error::Job '${INPUT_JOB}' not found in run ${RUN_ID}"
+          exit 1
+        fi
+
+        job_id=$(echo "${job_json}" | jq -r '.databaseId')
+        echo "job_id=${job_id}" >> "${GITHUB_OUTPUT}"
+
+        tmp_log=$(mktemp)
+        trap 'rm -f "${tmp_log}"' EXIT
+
+        for ((i=1; i<=INPUT_RETRY_COUNT; i++)); do
+          if gh run view "${RUN_ID}" --log --job "${job_id}" -R "${REPO}" > "${tmp_log}" 2>/dev/null; then
+            if grep -qF "${INPUT_PATTERN}" "${tmp_log}"; then
+              echo "matched=true" >> "${GITHUB_OUTPUT}"
+              echo "reason=matched" >> "${GITHUB_OUTPUT}"
+              echo "Pattern '${INPUT_PATTERN}' found in job '${INPUT_JOB}'."
+              exit 0
+            fi
+
+            echo "Log fetched for job '${INPUT_JOB}', but pattern was not found."
+            echo "reason=pattern_not_found" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if [[ "${i}" -lt "${INPUT_RETRY_COUNT}" ]]; then
+            echo "Job log is not available yet. Retry ${i}/${INPUT_RETRY_COUNT}..."
+            sleep "${INPUT_RETRY_INTERVAL}"
+          fi
+        done
+
+        echo "Job log for '${INPUT_JOB}' was not available after ${INPUT_RETRY_COUNT} attempts."
+        echo "reason=log_unavailable" >> "${GITHUB_OUTPUT}"
