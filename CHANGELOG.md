@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.2.1](https://github.com/k1LoW/rerun-action/compare/v1.2.0...v1.2.1) - 2026-06-06
+
+- chore(deps): bump Songmu/tagpr from 1.18.1 to 1.18.3 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/rerun-action/pull/11
+- chore(deps): bump Songmu/tagpr from 1.18.3 to 1.19.0 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/rerun-action/pull/12
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/k1LoW/rerun-action/pull/13
+
 ## [v1.2.0](https://github.com/k1LoW/rerun-action/compare/v1.1.0...v1.2.0) - 2026-04-06
 - fix: add reran output to action by @k1LoW in https://github.com/k1LoW/rerun-action/pull/8
 
